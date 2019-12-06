@@ -95,7 +95,7 @@ theme: landscape
 # Deployment
 ## Docs: https://hexo.io/docs/deployment.html
 deploy:
- type: git
+  type: git
   repo: https://github.com/champion97/champion97.github.io.git
   branch: master
   message:
