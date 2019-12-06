@@ -97,5 +97,5 @@ theme: landscape
 deploy:
  type: git
   repo: https://github.com/champion97/champion97.github.io.git
-  branch: write
+  branch: master
   message:
