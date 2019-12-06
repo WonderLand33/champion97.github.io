@@ -1,68 +1,296 @@
-extends base
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
 
-block title
-  title= page.title + ' | ' + config.title
+    <meta name="author" content="champion97">
 
-block content
-  .post
-    h1.post-title= page.title
-    .post-meta= page.date.format('ll')
-      if page.categories.length > 0
-        span= ' | '
-        span.category
-          for category in page.categories.toArray()
-            a(href=url_for(category.path))= category.name
-      if theme.busuanzi == true
-        script(src='https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js', async)
-        span#busuanzi_container_page_pv= ' | '
-          span#busuanzi_value_page_pv
-          span= ' ' + __('Hits')
-      if theme.wordcount == true
-        include _partial/wordcount.pug
-    if theme.disqus
-      a.disqus-comment-count(data-disqus-identifier=page.path, href=url_for(page.path) + '#disqus_thread')
-    if theme.changyan
-      a.ds-thread-count(href=url_for(page.path) + '#SOHUCS')
-        span#changyan_count_unit(style='font-size: 15px; color: #6E7173;') 0
-        span= ' ' + __('Comment')
-      script(src='https://assets.changyan.sohu.com/upload/plugins/plugins.count.js', async)
-    if theme.valine.enable
-      a.disqus-comment-count( href=url_for(page.path) + '#vcomment')
-        span.valine-comment-count(data-xid=url_for(page.path))
-        span= ' ' + __('Comment')
-    if page.toc
-      div(class='clear')
-        div(id='toc' class='toc-article')
-          div(class='toc-title')= __('contents')
-          != toc(page.content, {list_number: theme.toc_number})
-    .post-content
-      != page.content
-    if theme.donate.enable == true
-      iframe(src='/donate/?AliPayQR=' + theme.donate.alipay_qr + '&WeChatQR=' + theme.donate.wechat_qr + '&GitHub=' + theme.donate.github + '&BTCQR=' + theme.donate.btc_qr + '&BTCKEY='+ theme.donate.btc_key + '&PayPal=' + theme.donate.paypal_url, style='overflow-x:hidden; overflow-y:hidden; border:0xp none #fff; min-height:240px; width:100%;', frameborder='0', scrolling='no')
 
-    if theme.post_copyright.enable == true && page.copyright != false
-      div
-        ul.post-copyright
-          li.post-copyright-author
-            strong= __('copyright_author_prefix')
-            = theme.post_copyright.author
-          li.post-copyright-link
-            strong= __('copyright_link_prefix')
-            a(href='/' + page.path)= page.permalink
-          li.post-copyright-license
-            strong= __('copyright_declare_prefix')
-            if theme.post_copyright.copyright_text
-              != theme.post_copyright.copyright_text
-            else
-              != __('copyright_default_text')
-      br
 
-    if theme.shareto == true
-      script(type='text/javascript', src=url_for(theme.js) + '/share.js' + '?v=' + theme.version, async)
-      a.article-share-link(data-url=page.permalink, data-id=page._id, data-qrcode=qrcode(page.permalink))= __('shareto')
+    <meta name="description" content="champion97">
 
-    include _partial/tag.pug
-    include _partial/post_nav.pug
 
-    if page.comments
-      include _partial/comments.pug
+
+<title>Charles 配合 Android 模拟器对 HTTPS 请求进行抓包 | Hometown</title>
+
+
+
+    <link rel="icon" href="/favicon.ico">
+
+
+
+
+    <!-- stylesheets list from _config.yml -->
+    
+    <link rel="stylesheet" href="/css/style.css">
+    
+
+
+
+    <!-- scripts list from _config.yml -->
+    
+    <script src="/js/script.js"></script>
+    
+    <script src="/js/tocbot.min.js"></script>
+    
+
+
+
+    
+    
+        
+    
+
+
+</head>
+<body>
+    <div class="wrapper">
+        <header>
+    <nav class="navbar">
+        <div class="container">
+            <div class="navbar-header header-logo"><a href="/">Hometown</a></div>
+            <div class="menu navbar-right">
+                
+                    <a class="menu-item" href="/archives">Posts</a>
+                
+                    <a class="menu-item" href="/category">Categories</a>
+                
+                    <a class="menu-item" href="/tag">Tags</a>
+                
+                    <a class="menu-item" href="/about">About</a>
+                
+                <input id="switch_default" type="checkbox" class="switch_default">
+                <label for="switch_default" class="toggleBtn"></label>
+            </div>
+
+        </div>
+    </nav>
+
+    
+    <nav class="navbar-mobile" id="nav-mobile">
+        <div class="container">
+            <div class="navbar-header">
+                <div>
+                    <a href="/">Hometown</a><a id="mobile-toggle-theme">·&nbsp;Light</a>
+                </div>
+                <div class="menu-toggle" onclick="mobileBtn()">&#9776; Menu</div>
+            </div>
+            <div class="menu" id="mobile-menu">
+                
+                    <a class="menu-item" href="/archives">Posts</a>
+                
+                    <a class="menu-item" href="/category">Categories</a>
+                
+                    <a class="menu-item" href="/tag">Tags</a>
+                
+                    <a class="menu-item" href="/about">About</a>
+                
+            </div>
+        </div>
+    </nav>
+
+</header>
+<script>
+    var mobileBtn = function f() {
+        var toggleMenu = document.getElementsByClassName("menu-toggle")[0];
+        var mobileMenu = document.getElementById("mobile-menu");
+        if(toggleMenu.classList.contains("active")){
+           toggleMenu.classList.remove("active")
+            mobileMenu.classList.remove("active")
+        }else{
+            toggleMenu.classList.add("active")
+            mobileMenu.classList.add("active")
+        }
+    }
+</script>
+        <div class="main">
+            <div class="container">
+    
+    
+        <div class="post-toc">
+    <div class="tocbot-list">
+    </div>
+    <div class="tocbot-list-menu">
+        <a class="tocbot-toc-expand" onclick="expand_toc()">Expand all</a>
+        <a onclick="go_top()">Back to top</a>
+        <a onclick="go_bottom()">Go to bottom</a>
+    </div>
+</div>
+
+<script>
+    document.ready(
+        function () {
+            tocbot.init({
+                tocSelector: '.tocbot-list',
+                contentSelector: '.post-content',
+                headingSelector: 'h1, h2, h3, h4, h5',
+                collapseDepth: 1,
+                orderedList: false,
+                scrollSmooth: true,
+            })
+        }
+    )
+
+    function expand_toc() {
+        var b = document.querySelector(".tocbot-toc-expand");
+        tocbot.init({
+            tocSelector: '.tocbot-list',
+            contentSelector: '.post-content',
+            headingSelector: 'h1, h2, h3, h4, h5',
+            collapseDepth: 6,
+            orderedList: false,
+            scrollSmooth: true,
+        });
+        b.setAttribute("onclick", "collapse_toc()");
+        b.innerHTML = "Collapse all"
+    }
+
+    function collapse_toc() {
+        var b = document.querySelector(".tocbot-toc-expand");
+        tocbot.init({
+            tocSelector: '.tocbot-list',
+            contentSelector: '.post-content',
+            headingSelector: 'h1, h2, h3, h4, h5',
+            collapseDepth: 1,
+            orderedList: false,
+            scrollSmooth: true,
+        });
+        b.setAttribute("onclick", "expand_toc()");
+        b.innerHTML = "Expand all"
+    }
+
+    function go_top() {
+        window.scrollTo(0, 0);
+    }
+
+    function go_bottom() {
+        window.scrollTo(0, document.body.scrollHeight);
+    }
+
+</script>
+    
+
+    
+    <article class="post-wrap">
+        <header class="post-header">
+            <h1 class="post-title">Charles 配合 Android 模拟器对 HTTPS 请求进行抓包</h1>
+            
+                <div class="post-meta">
+                    
+                        Author: <a itemprop="author" rel="author" href="/">champion97</a>
+                    
+
+                    
+                        <span class="post-time">
+                        Date: <a href="#">十一月 21, 2019&nbsp;&nbsp;15:31:11</a>
+                        </span>
+                    
+                    
+                </div>
+            
+        </header>
+
+        <div class="post-content">
+            <h2 id="Charles-配合-Android-模拟器对-HTTPS-请求进行抓包"><a href="#Charles-配合-Android-模拟器对-HTTPS-请求进行抓包" class="headerlink" title="Charles 配合 Android 模拟器对 HTTPS 请求进行抓包"></a>Charles 配合 Android 模拟器对 HTTPS 请求进行抓包</h2><h3 id="要用到的东西："><a href="#要用到的东西：" class="headerlink" title="要用到的东西："></a>要用到的东西：</h3><p> 1.Charles<br> 2.Android 模拟器(网易mumu、夜神都可以，或者真机)<br> 3.要抓包的App(豆瓣app)</p>
+<h3 id="步骤："><a href="#步骤：" class="headerlink" title="步骤："></a>步骤：</h3><ol>
+<li><p>打开Charles，配置好HTTP代理</p>
+<p><img src="https://s2.ax1x.com/2019/11/21/MI8Axg.png" alt="MI8Axg.png"></p>
+<p><img src="https://s2.ax1x.com/2019/11/21/MI8DzD.png" alt="MI8DzD.png"></p>
+</li>
+</ol>
+<ol start="2">
+<li><p>打开安卓模拟器，设置-&gt;WLAN-&gt;长按-&gt;修改网络设置-&gt;手动设置代理</p>
+<p><img src="https://s2.ax1x.com/2019/11/21/MI07C9.png" alt="MI07C9.png"></p>
+</li>
+</ol>
+<ol start="3">
+<li><p>安装 SSL 根证书</p>
+<p>Charles ：</p>
+</li>
+</ol>
+<p><img src="https://s2.ax1x.com/2019/11/21/MI8TyQ.png" alt="MI8TyQ.png"></p>
+<p><img src="https://s2.ax1x.com/2019/11/21/MIN7ad.png" alt="MIN7ad.png"></p>
+<p>安卓模拟器通过浏览器访问 <code>chls.pro/ssl</code> 并下载：</p>
+<p><img src="https://s2.ax1x.com/2019/11/21/MIUFGq.png" alt="MIUFGq.png"></p>
+<p>点击以安装证书。然后打开 设置-&gt;安全-&gt;信任的凭证会看到刚才安装好的ssl证书：</p>
+<p><img src="https://s2.ax1x.com/2019/11/21/MIUJsO.png" alt="MIUJsO.png"></p>
+<p>4.在模拟器上打开需要抓包的APP，打开后观察Charles，这时候会有请求过来：</p>
+<p>可以看到，请求是加密的，此时看不到，需要<strong>开启 SSL Proxy</strong>。</p>
+<p><img src="https://s2.ax1x.com/2019/11/21/MIdPg0.png" alt="MIdPg0.png"></p>
+<p>开启 SSL Proxy 之后：</p>
+<p><img src="https://s2.ax1x.com/2019/11/21/MId1KK.png" alt="MId1KK.png"></p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>Charles、Fiddler 这类工具通过往系统导入根证书来实现 HTTPS 流量解密，充当中间人角色。要防范真正的 HTTPS 中间人攻击，网站方需要保管好自己的证书私钥和域名认证信息，为了防范不良 CA 非法向第三方签发自己的网站证书，还要尽可能启用 <a href="https://imququ.com/post/certificate-transparency.html" target="_blank" rel="noopener">Certificate Transparency</a>、<a href="https://imququ.com/post/http-public-key-pinning.html" target="_blank" rel="noopener">HTTP Public Key Pinning</a> 等策略；用户方不要随便信任来历不明的证书，更不要随意导入证书到根证书列表，还要养成经常检查常用网站证书链的习惯。</p>
+<p>RSA 密钥交换没有前向安全性，这意味着一旦私钥泄漏，之前所有加密流量都可以解开。为此，网站方需要启用使用 ECDHE 作为密钥交换的 CipherSuite，或者直接使用 ECC 证书；用户方需要弃用不支持 ECDHE 的古董操作系统及浏览器。</p>
+<p>对于浏览器而言，HTTPS 毫无秘密，通过浏览器生成的 <code>SSLKEYLOGFILE</code> 文件，Wireshark 可以轻松解密 HTTPS 流量。另外，如果浏览器被安装恶意扩展，即使访问安全的 HTTPS 网站，提交的数据一样可以被截获。这种客户端被攻击者控制引发的安全问题，无法通过 HTTPS 来解决。</p>
+<p>参考：</p>
+<p><a href="https://zh.wikipedia.org/wiki/%E8%B6%85%E6%96%87%E6%9C%AC%E4%BC%A0%E8%BE%93%E5%AE%89%E5%85%A8%E5%8D%8F%E8%AE%AE" target="_blank" rel="noopener">https://zh.wikipedia.org/wiki/%E8%B6%85%E6%96%87%E6%9C%AC%E4%BC%A0%E8%BE%93%E5%AE%89%E5%85%A8%E5%8D%8F%E8%AE%AE</a></p>
+<p><a href="https://imququ.com/post/how-to-decrypt-https.html" target="_blank" rel="noopener">https://imququ.com/post/how-to-decrypt-https.html</a></p>
+
+        </div>
+
+        
+            <section class="post-copyright">
+                
+                    <p class="copyright-item">
+                        <span>Author:</span>
+                        <span>champion97</span>
+                    </p>
+                
+                
+                    <p class="copyright-item">
+                        <span>Permalink:</span>
+                        <span><a href="https://champion97.netlify.com/2019/11/21/Charles-%E9%85%8D%E5%90%88-Android-%E6%A8%A1%E6%8B%9F%E5%99%A8%E5%AF%B9-HTTPS-%E8%AF%B7%E6%B1%82%E8%BF%9B%E8%A1%8C%E6%8A%93%E5%8C%85/">https://champion97.netlify.com/2019/11/21/Charles-%E9%85%8D%E5%90%88-Android-%E6%A8%A1%E6%8B%9F%E5%99%A8%E5%AF%B9-HTTPS-%E8%AF%B7%E6%B1%82%E8%BF%9B%E8%A1%8C%E6%8A%93%E5%8C%85/</a></span>
+                    </p>
+                
+                
+                    <p class="copyright-item">
+                        <span>License:</span>
+                        <span>Copyright (c) 2019 <a href="http://creativecommons.org/licenses/by-nc/4.0/" target="_blank" rel="noopener">CC-BY-NC-4.0</a> LICENSE</span>
+                    </p>
+                
+                
+                     <p class="copyright-item">
+                         <span>Slogan:</span>
+                         <span>Do you believe in <strong>DESTINY<strong>?</span>
+                     </p>
+                
+
+            </section>
+        
+        <section class="post-tags">
+            <div>
+                <span>Tag(s):</span>
+                <span class="tag">
+                    
+                </span>
+            </div>
+            <div>
+                <a href="javascript:window.history.back();" target="_blank" rel="noopener">back</a>
+                <span>· </span>
+                <a href="/">home</a>
+            </div>
+        </section>
+        <section class="post-nav">
+            
+                <a class="prev" rel="prev" href="/2019/12/06/hello-world/">Hello World</a>
+            
+            
+        </section>
+
+
+    </article>
+</div>
+
+        </div>
+        <footer id="footer" class="footer">
+    <div class="copyright">
+        <span>© champion97 | Powered by <a href="https://hexo.io" target="_blank">Hexo</a> & <a href="https://github.com/Siricee/hexo-theme-Chic" target="_blank">Chic</a> & <a href="https://www.netlify.com" target="_blank">Netlify</a></span>
+    </div>
+</footer>
+
+    </div>
+</body>
+</html>
