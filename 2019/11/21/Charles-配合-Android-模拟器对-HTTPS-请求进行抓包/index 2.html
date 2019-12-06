@@ -56,6 +56,10 @@
                 
                     <a class="menu-item" href="/archives">Posts</a>
                 
+                    <a class="menu-item" href="/category">Categories</a>
+                
+                    <a class="menu-item" href="/tag">Tags</a>
+                
                     <a class="menu-item" href="/about">About</a>
                 
                 <input id="switch_default" type="checkbox" class="switch_default">
@@ -77,6 +81,10 @@
             <div class="menu" id="mobile-menu">
                 
                     <a class="menu-item" href="/archives">Posts</a>
+                
+                    <a class="menu-item" href="/category">Categories</a>
+                
+                    <a class="menu-item" href="/tag">Tags</a>
                 
                     <a class="menu-item" href="/about">About</a>
                 
@@ -186,26 +194,37 @@
         </header>
 
         <div class="post-content">
-            <h2 id="Charles-配合-Android-模拟器对-HTTPS-请求进行抓包"><a href="#Charles-配合-Android-模拟器对-HTTPS-请求进行抓包" class="headerlink" title="Charles 配合 Android 模拟器对 HTTPS 请求进行抓包"></a>Charles 配合 Android 模拟器对 HTTPS 请求进行抓包</h2><h3 id="准备工作"><a href="#准备工作" class="headerlink" title="准备工作"></a>准备工作</h3><ul>
-<li>Charles</li>
-<li>Android 模拟器(或者真机)</li>
-<li>要抓包的APP</li>
-</ul>
-<h3 id="开始抓包"><a href="#开始抓包" class="headerlink" title="开始抓包"></a>开始抓包</h3><h4 id="1-Charles启动HTTP代理服务"><a href="#1-Charles启动HTTP代理服务" class="headerlink" title="1.Charles启动HTTP代理服务"></a>1.Charles启动HTTP代理服务</h4><p><img src="https://s2.ax1x.com/2019/11/21/MI8Axg.png" alt="MI8Axg.png"></p>
+            <h2 id="Charles-配合-Android-模拟器对-HTTPS-请求进行抓包"><a href="#Charles-配合-Android-模拟器对-HTTPS-请求进行抓包" class="headerlink" title="Charles 配合 Android 模拟器对 HTTPS 请求进行抓包"></a>Charles 配合 Android 模拟器对 HTTPS 请求进行抓包</h2><h3 id="要用到的东西："><a href="#要用到的东西：" class="headerlink" title="要用到的东西："></a>要用到的东西：</h3><p> 1.Charles<br> 2.Android 模拟器(网易mumu、夜神都可以，或者真机)<br> 3.要抓包的App(豆瓣app)</p>
+<h3 id="步骤："><a href="#步骤：" class="headerlink" title="步骤："></a>步骤：</h3><ol>
+<li><p>打开Charles，配置好HTTP代理</p>
+<p><img src="https://s2.ax1x.com/2019/11/21/MI8Axg.png" alt="MI8Axg.png"></p>
 <p><img src="https://s2.ax1x.com/2019/11/21/MI8DzD.png" alt="MI8DzD.png"></p>
-<h4 id="2-安卓模拟器配置HTTP代理"><a href="#2-安卓模拟器配置HTTP代理" class="headerlink" title="2.安卓模拟器配置HTTP代理"></a>2.安卓模拟器配置HTTP代理</h4><p><img src="https://s2.ax1x.com/2019/11/21/MI07C9.png" alt="MI07C9.png"></p>
-<p><strong>设置-&gt;WLAN-&gt;长按-&gt;修改网络设置-&gt;手动设置代理</strong></p>
-<h4 id="3-安装-SSL-根证书"><a href="#3-安装-SSL-根证书" class="headerlink" title="3.安装 SSL 根证书"></a>3.安装 SSL 根证书</h4><p><img src="https://s2.ax1x.com/2019/11/21/MI8TyQ.png" alt="MI8TyQ.png"></p>
+</li>
+</ol>
+<ol start="2">
+<li><p>打开安卓模拟器，设置-&gt;WLAN-&gt;长按-&gt;修改网络设置-&gt;手动设置代理</p>
+<p><img src="https://s2.ax1x.com/2019/11/21/MI07C9.png" alt="MI07C9.png"></p>
+</li>
+</ol>
+<ol start="3">
+<li><p>安装 SSL 根证书</p>
+<p>Charles ：</p>
+</li>
+</ol>
+<p><img src="https://s2.ax1x.com/2019/11/21/MI8TyQ.png" alt="MI8TyQ.png"></p>
 <p><img src="https://s2.ax1x.com/2019/11/21/MIN7ad.png" alt="MIN7ad.png"></p>
-<p><strong>安卓模拟器通过浏览器访问 <code>chls.pro/ssl</code> 并下载</strong></p>
+<p>安卓模拟器通过浏览器访问 <code>chls.pro/ssl</code> 并下载：</p>
 <p><img src="https://s2.ax1x.com/2019/11/21/MIUFGq.png" alt="MIUFGq.png"></p>
-<p>点击以安装证书。然后打开 <strong>设置-&gt;安全-&gt;信任的凭证</strong>会看到刚才安装好的ssl证书：</p>
+<p>点击以安装证书。然后打开 设置-&gt;安全-&gt;信任的凭证会看到刚才安装好的ssl证书：</p>
 <p><img src="https://s2.ax1x.com/2019/11/21/MIUJsO.png" alt="MIUJsO.png"></p>
-<h4 id="4-APP触发网络请求，观察Charles"><a href="#4-APP触发网络请求，观察Charles" class="headerlink" title="4.APP触发网络请求，观察Charles"></a>4.APP触发网络请求，观察Charles</h4><p><img src="https://s2.ax1x.com/2019/11/21/MIdPg0.png" alt="MIdPg0.png"></p>
+<p>4.在模拟器上打开需要抓包的APP，打开后观察Charles，这时候会有请求过来：</p>
 <p>可以看到，请求是加密的，此时看不到，需要<strong>开启 SSL Proxy</strong>。</p>
-<h4 id="5-开启-SSL-Proxy"><a href="#5-开启-SSL-Proxy" class="headerlink" title="5.开启 SSL Proxy"></a>5.开启 SSL Proxy</h4><p><img src="https://s2.ax1x.com/2019/11/21/MId1KK.png" alt="MId1KK.png"></p>
-<p><strong>成功解密<del>HTTPS</del>传输内容</strong></p>
+<p><img src="https://s2.ax1x.com/2019/11/21/MIdPg0.png" alt="MIdPg0.png"></p>
+<p>开启 SSL Proxy 之后：</p>
+<p><img src="https://s2.ax1x.com/2019/11/21/MId1KK.png" alt="MId1KK.png"></p>
 <h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>Charles、Fiddler 这类工具通过往系统导入根证书来实现 HTTPS 流量解密，充当中间人角色。要防范真正的 HTTPS 中间人攻击，网站方需要保管好自己的证书私钥和域名认证信息，为了防范不良 CA 非法向第三方签发自己的网站证书，还要尽可能启用 <a href="https://imququ.com/post/certificate-transparency.html" target="_blank" rel="noopener">Certificate Transparency</a>、<a href="https://imququ.com/post/http-public-key-pinning.html" target="_blank" rel="noopener">HTTP Public Key Pinning</a> 等策略；用户方不要随便信任来历不明的证书，更不要随意导入证书到根证书列表，还要养成经常检查常用网站证书链的习惯。</p>
+<p>RSA 密钥交换没有前向安全性，这意味着一旦私钥泄漏，之前所有加密流量都可以解开。为此，网站方需要启用使用 ECDHE 作为密钥交换的 CipherSuite，或者直接使用 ECC 证书；用户方需要弃用不支持 ECDHE 的古董操作系统及浏览器。</p>
+<p>对于浏览器而言，HTTPS 毫无秘密，通过浏览器生成的 <code>SSLKEYLOGFILE</code> 文件，Wireshark 可以轻松解密 HTTPS 流量。另外，如果浏览器被安装恶意扩展，即使访问安全的 HTTPS 网站，提交的数据一样可以被截获。这种客户端被攻击者控制引发的安全问题，无法通过 HTTPS 来解决。</p>
 <p>参考：</p>
 <p><a href="https://zh.wikipedia.org/wiki/%E8%B6%85%E6%96%87%E6%9C%AC%E4%BC%A0%E8%BE%93%E5%AE%89%E5%85%A8%E5%8D%8F%E8%AE%AE" target="_blank" rel="noopener">https://zh.wikipedia.org/wiki/%E8%B6%85%E6%96%87%E6%9C%AC%E4%BC%A0%E8%BE%93%E5%AE%89%E5%85%A8%E5%8D%8F%E8%AE%AE</a></p>
 <p><a href="https://imququ.com/post/how-to-decrypt-https.html" target="_blank" rel="noopener">https://imququ.com/post/how-to-decrypt-https.html</a></p>
