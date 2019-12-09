@@ -6,7 +6,7 @@
 title: Hometown
 subtitle: ''
 description: 'champion97'
-keywords:
+keywords: 'champion97'
 author: champion97
 language: zh-CN
 timezone: 'PRC'
@@ -90,7 +90,7 @@ ignore:
 # Extensions
 ## Plugins: https://hexo.io/plugins/
 ## Themes: https://hexo.io/themes/
-theme: Chic
+theme: next
 
 # Deployment
 ## Docs: https://hexo.io/docs/deployment.html
