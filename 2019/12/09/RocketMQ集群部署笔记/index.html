@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+    <meta name="author" content="champion97">
+
+
+
+    <meta name="description" content="champion97">
+
+
+
+<title>RocketMQ集群部署笔记 | Hometown</title>
+
+
+
+    <link rel="icon" href="/favicon.ico">
+
+
+
+
+    <!-- stylesheets list from _config.yml -->
+    
+    <link rel="stylesheet" href="/css/style.css">
+    
+
+
+
+    <!-- scripts list from _config.yml -->
+    
+    <script src="/js/script.js"></script>
+    
+    <script src="/js/tocbot.min.js"></script>
+    
+
+
+
+    
+    
+        
+    
+
+
+</head>
+<body>
+    <div class="wrapper">
+        <header>
+    <nav class="navbar">
+        <div class="container">
+            <div class="navbar-header header-logo"><a href="/">Hometown</a></div>
+            <div class="menu navbar-right">
+                
+                    <a class="menu-item" href="/archives">Posts</a>
+                
+                    <a class="menu-item" href="/about">About</a>
+                
+                <input id="switch_default" type="checkbox" class="switch_default">
+                <label for="switch_default" class="toggleBtn"></label>
+            </div>
+
+        </div>
+    </nav>
+
+    
+    <nav class="navbar-mobile" id="nav-mobile">
+        <div class="container">
+            <div class="navbar-header">
+                <div>
+                    <a href="/">Hometown</a><a id="mobile-toggle-theme">·&nbsp;Light</a>
+                </div>
+                <div class="menu-toggle" onclick="mobileBtn()">&#9776; Menu</div>
+            </div>
+            <div class="menu" id="mobile-menu">
+                
+                    <a class="menu-item" href="/archives">Posts</a>
+                
+                    <a class="menu-item" href="/about">About</a>
+                
+            </div>
+        </div>
+    </nav>
+
+</header>
+<script>
+    var mobileBtn = function f() {
+        var toggleMenu = document.getElementsByClassName("menu-toggle")[0];
+        var mobileMenu = document.getElementById("mobile-menu");
+        if(toggleMenu.classList.contains("active")){
+           toggleMenu.classList.remove("active")
+            mobileMenu.classList.remove("active")
+        }else{
+            toggleMenu.classList.add("active")
+            mobileMenu.classList.add("active")
+        }
+    }
+</script>
+        <div class="main">
+            <div class="container">
+    
+    
+        <div class="post-toc">
+    <div class="tocbot-list">
+    </div>
+    <div class="tocbot-list-menu">
+        <a class="tocbot-toc-expand" onclick="expand_toc()">Expand all</a>
+        <a onclick="go_top()">Back to top</a>
+        <a onclick="go_bottom()">Go to bottom</a>
+    </div>
+</div>
+
+<script>
+    document.ready(
+        function () {
+            tocbot.init({
+                tocSelector: '.tocbot-list',
+                contentSelector: '.post-content',
+                headingSelector: 'h1, h2, h3, h4, h5',
+                collapseDepth: 1,
+                orderedList: false,
+                scrollSmooth: true,
+            })
+        }
+    )
+
+    function expand_toc() {
+        var b = document.querySelector(".tocbot-toc-expand");
+        tocbot.init({
+            tocSelector: '.tocbot-list',
+            contentSelector: '.post-content',
+            headingSelector: 'h1, h2, h3, h4, h5',
+            collapseDepth: 6,
+            orderedList: false,
+            scrollSmooth: true,
+        });
+        b.setAttribute("onclick", "collapse_toc()");
+        b.innerHTML = "Collapse all"
+    }
+
+    function collapse_toc() {
+        var b = document.querySelector(".tocbot-toc-expand");
+        tocbot.init({
+            tocSelector: '.tocbot-list',
+            contentSelector: '.post-content',
+            headingSelector: 'h1, h2, h3, h4, h5',
+            collapseDepth: 1,
+            orderedList: false,
+            scrollSmooth: true,
+        });
+        b.setAttribute("onclick", "expand_toc()");
+        b.innerHTML = "Expand all"
+    }
+
+    function go_top() {
+        window.scrollTo(0, 0);
+    }
+
+    function go_bottom() {
+        window.scrollTo(0, document.body.scrollHeight);
+    }
+
+</script>
+    
+
+    
+    <article class="post-wrap">
+        <header class="post-header">
+            <h1 class="post-title">RocketMQ集群部署笔记</h1>
+            
+                <div class="post-meta">
+                    
+                        Author: <a itemprop="author" rel="author" href="/">champion97</a>
+                    
+
+                    
+                        <span class="post-time">
+                        Date: <a href="#">十二月 9, 2019&nbsp;&nbsp;17:41:38</a>
+                        </span>
+                    
+                    
+                </div>
+            
+        </header>
+
+        <div class="post-content">
+            <h2 id="RocketMQ集群-2m-2s-sync-部署笔记"><a href="#RocketMQ集群-2m-2s-sync-部署笔记" class="headerlink" title="RocketMQ集群(2m-2s-sync)部署笔记"></a>RocketMQ集群(2m-2s-sync)部署笔记</h2><h4 id="背景介绍"><a href="#背景介绍" class="headerlink" title="背景介绍"></a>背景介绍</h4><p>随着时间推移和数据的累积，老项目中的ActiveMQ的缺点越来越明显了。主要表现在：队列增多、消息堆积、吞吐量下降甚至出现了消息丢失等一系列问题；结合这几天对消息中间件的调研最终决定使用RocketMQ（集群部署）替代ActiveMQ（迁移工作笔记后续补充）。</p>
+<h4 id="使用RocketMQ的原因"><a href="#使用RocketMQ的原因" class="headerlink" title="使用RocketMQ的原因"></a>使用RocketMQ的原因</h4><ul>
+<li><p>灵活的分布式横向扩展部署架构，低延迟、高可靠</p>
+</li>
+<li><p>海量消息堆积能力</p>
+</li>
+<li><p>提供丰富的消息拉取模式，支持严格顺序消息、事务消息、定时消息等，提供各种消息过滤器机制，例如Tag和SQL</p>
+</li>
+<li><p>功能丰富的Dashboard，用于配置、指标监控</p>
+</li>
+<li><p>开源社区活跃，成熟（经过双十一考验）</p>
+</li>
+<li><p>等等….</p>
+</li>
+</ul>
+<p><em>官网介绍：<a href="https://rocketmq.apache.org/docs/motivation" target="_blank" rel="noopener">https://rocketmq.apache.org/docs/motivation</a></em></p>
+<h4 id="RocketMQ的几种角色"><a href="#RocketMQ的几种角色" class="headerlink" title="RocketMQ的几种角色"></a>RocketMQ的几种角色</h4><p><img src="https://s2.ax1x.com/2019/12/05/Q8jLC9.png" alt="Q8jLC9.png"></p>
+<ul>
+<li><strong>Producer</strong>：消息发布的角色，支持分布式集群方式部署。Producer通过MQ的负载均衡模块选择相应的Broker集群队列进行消息投递，投递的过程支持快速失败并且低延迟。</li>
+<li><strong>Consumer</strong>：消息消费的角色，支持分布式集群方式部署。支持以push推，pull拉两种模式对消息进行消费。同时也支持集群方式和广播方式的消费，它提供实时消息订阅机制，可以满足大多数用户的需求。</li>
+<li><strong>NameServer</strong>：NameServer 是一个非常简单的Topic路由注册中心，其角色类似Dubbo中的zookeeper，支持Broker的动态注册与发现。主要包括两个功能：Broker管理，NameServer接受Broker集群的注册信息并且保存下来作为路由信息的基本数据。然后提供心跳检测机制，检查Broker是否还存活；路由信息管理，每个NameServer将保存关于 Broker集群的整个路由信息和用于客户端查询的队列信息。然后Producer和Conumser通过NameServer就可以知道整个Broker集群的路由信息，从而进行消息的投递和消费。NameServer通常也是集群的方式部署，各实例间相互不进行信息通讯。Broker是向每一台NameServer注册自己的路由信息，所以每一个NameServer实例上面都保存一份完整的路由信息。当某个NameServer因某种原因下线了，Broker仍然可以向其它NameServer同步其路由信息，Producer,Consumer仍然可以动态感知Broker的路由的信息。</li>
+<li><strong>BrokerServer</strong>：Broker主要负责消息的存储、投递和查询以及服务高可用保证。</li>
+</ul>
+<h4 id="几种集群搭建模式"><a href="#几种集群搭建模式" class="headerlink" title="几种集群搭建模式"></a>几种集群搭建模式</h4><h5 id="1-单Master模式"><a href="#1-单Master模式" class="headerlink" title="1.单Master模式"></a>1.单Master模式</h5><p>这种方式风险较大，一旦Broker重启或者宕机时，会导致整个服务不可用。不建议线上环境使用,可以用于本地测试。</p>
+<h5 id="2-多Master模式"><a href="#2-多Master模式" class="headerlink" title="2.多Master模式"></a>2.多Master模式</h5><p>一个集群无Slave，全是Master，例如2个Master或者3个Master，这种模式的优缺点如下：</p>
+<ul>
+<li>优点：配置简单，单个Master宕机或重启维护对应用无影响，在磁盘配置为RAID10时，即使机器宕机不可恢复情况下，由于RAID10磁盘非常可靠，消息也不会丢（异步刷盘丢失少量消息，同步刷盘一条不丢），性能最高；</li>
+<li>缺点：单台机器宕机期间，这台机器上未被消费的消息在机器恢复之前不可订阅，消息实时性会受到影响。</li>
+</ul>
+<h5 id="3-多Master多Slave模式-异步复制"><a href="#3-多Master多Slave模式-异步复制" class="headerlink" title="3.多Master多Slave模式-异步复制"></a>3.多Master多Slave模式-异步复制</h5><p>每个Master配置一个Slave，有多对Master-Slave，HA采用异步复制方式，主备有短暂消息延迟（毫秒级），这种模式的优缺点如下：</p>
+<ul>
+<li>优点：即使磁盘损坏，消息丢失的非常少，且消息实时性不会受影响，同时Master宕机后，消费者仍然可以从Slave消费，而且此过程对应用透明，不需要人工干预，性能同多Master模式几乎一样；</li>
+<li>缺点：Master宕机，磁盘损坏情况下会丢失少量消息。</li>
+</ul>
+<h5 id="4-多Master多Slave模式-同步双写"><a href="#4-多Master多Slave模式-同步双写" class="headerlink" title="4.多Master多Slave模式-同步双写"></a>4.多Master多Slave模式-同步双写</h5><p>每个Master配置一个Slave，有多对Master-Slave，HA采用同步双写方式，即只有主备都写成功，才向应用返回成功，这种模式的优缺点如下：</p>
+<ul>
+<li>优点：数据与服务都无单点故障，Master宕机情况下，消息无延迟，服务可用性与数据可用性都非常高；</li>
+<li>缺点：性能比异步复制模式略低（大约低10%左右），发送单个消息的RT会略高，且目前版本在主节点宕机后，备机不能自动切换为主机。</li>
+</ul>
+<h4 id="2m-2s-sync模式搭建记录"><a href="#2m-2s-sync模式搭建记录" class="headerlink" title="2m-2s-sync模式搭建记录"></a>2m-2s-sync模式搭建记录</h4><p>我们采用的是2m-2s-sync()模式进行集群（也就是2个Master和2个Slave-异步复制的模式）。双主双从一般有两种模式：异步复制和同步双写。同步双写就是，当生产端生产消息后，主节点和从节点都收到消息并把消息都同时写入到本地后，才会回复消息。而异步复制是指，当主节点将数据保存到本地后，直接返回成功的消息，不关系从节点是否写入成功。因此通过比较，我们可以看出，异步复制效率比较高，而同步双写更具有高可用性，数据也变得更加可靠。</p>
+<h6 id="环境准备"><a href="#环境准备" class="headerlink" title="环境准备"></a>环境准备</h6><ol>
+<li><p>Apache RocketMQ4.6.0 安装包</p>
+<p>下载地址：<a href="https://rocketmq.apache.org/dowloading/releases/，目前有官方有7个大版本，我下载的最新版本" target="_blank" rel="noopener">https://rocketmq.apache.org/dowloading/releases/，目前有官方有7个大版本，我下载的最新版本</a> <strong>4.6.0</strong>。</p>
+<p><strong>4.6.x</strong> 对JRE版本要求(需要有Java运行环境)：</p>
+<table>
+<thead>
+<tr>
+<th><strong>Client</strong></th>
+<th><strong>Broker</strong></th>
+<th><strong>NameServer</strong></th>
+</tr>
+</thead>
+<tbody><tr>
+<td>&gt;=1.6</td>
+<td>&gt;=1.8</td>
+<td>&gt;=1.8</td>
+</tr>
+</tbody></table>
+</li>
+</ol>
+<ol start="2">
+<li><p>2台Linux服务器</p>
+<table>
+<thead>
+<tr>
+<th>主机</th>
+<th>IP地址</th>
+<th>角色</th>
+<th>模式</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>A机器</td>
+<td>192.168.1.240</td>
+<td>NameServer、broker-a-master、broker-b-slave</td>
+<td>Master/Slave</td>
+</tr>
+<tr>
+<td>B机器</td>
+<td>192.168.1.241</td>
+<td>NameServer、broker-b-master、broker-a-slave</td>
+<td>Master/Slave</td>
+</tr>
+</tbody></table>
+</li>
+</ol>
+<p>3.分别A、B两台机器中下载解压RocketMQ文件(二进制包)</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span></pre></td><td class="code"><pre><span class="line">$ mkdir rocketmq &amp;&amp; <span class="built_in">cd</span> rocketmq</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">2</span></pre></td><td class="code"><pre><span class="line">$ wget http://mirrors.tuna.tsinghua.edu.cn/apache/rocketmq/4.6.0/rocketmq-all-4.6.0-bin-release.zip</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">3</span></pre></td><td class="code"><pre><span class="line">$ unzip rocketmq-all-4.6.0-bin-release.zip</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">4</span></pre></td><td class="code"><pre><span class="line">$ mv rocketmq-all-4.6.0-bin-release 4.6.0</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">5</span></pre></td><td class="code"><pre><span class="line">$ <span class="built_in">pwd</span></span></pre></td></tr><tr><td class="gutter"><pre><span class="line">6</span></pre></td><td class="code"><pre><span class="line">/home/data/application/rocketmq/4.6.0</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">7</span></pre></td><td class="code"><pre><span class="line">$ ll</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">8</span></pre></td><td class="code"><pre><span class="line">总用量 48</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">9</span></pre></td><td class="code"><pre><span class="line">drwxr-xr-x 2 root root  4096 11月 20 11:04 benchmark</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">10</span></pre></td><td class="code"><pre><span class="line">drwxr-xr-x 3 root root  4096 8月  19 15:31 bin</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">11</span></pre></td><td class="code"><pre><span class="line">drwxr-xr-x 6 root root  4096 8月   6 16:23 conf</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">12</span></pre></td><td class="code"><pre><span class="line">drwxr-xr-x 2 root root  4096 11月 20 11:04 lib</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">13</span></pre></td><td class="code"><pre><span class="line">-rw-r--r-- 1 root root 17336 8月   6 16:23 LICENSE</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">14</span></pre></td><td class="code"><pre><span class="line">-rw-r--r-- 1 root root  1338 8月   6 16:23 NOTICE</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">15</span></pre></td><td class="code"><pre><span class="line">-rw-r--r-- 1 root root  4225 11月  1 16:54 README.md</span></pre></td></tr></table></figure>
+
+
+
+<h6 id="集群配置"><a href="#集群配置" class="headerlink" title="集群配置"></a>集群配置</h6><p>1.在A机器上配置MasterA/SlaveB</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span></pre></td><td class="code"><pre><span class="line">[root@A 2m-2s-async]<span class="comment"># vim broker-a.properties</span></span></pre></td></tr></table></figure>
+
+<figure class="highlight properties"><table><tr><td class="gutter"><pre><span class="line">1</span></pre></td><td class="code"><pre><span class="line"><span class="comment"># 集群名称</span></span></pre></td></tr><tr><td class="gutter"><pre><span class="line">2</span></pre></td><td class="code"><pre><span class="line"><span class="attr">brokerClusterName</span>=<span class="string">rocketmq_cluster</span></span></pre></td></tr><tr><td class="gutter"><pre><span class="line">3</span></pre></td><td class="code"><pre><span class="line"><span class="attr">brokerName</span>=<span class="string">broker-a</span></span></pre></td></tr><tr><td class="gutter"><pre><span class="line">4</span></pre></td><td class="code"><pre><span class="line"><span class="comment"># 主服务器必须为0</span></span></pre></td></tr><tr><td class="gutter"><pre><span class="line">5</span></pre></td><td class="code"><pre><span class="line"><span class="attr">brokerId</span>=<span class="string">0</span></span></pre></td></tr><tr><td class="gutter"><pre><span class="line">6</span></pre></td><td class="code"><pre><span class="line"><span class="attr">deleteWhen</span>=<span class="string">04</span></span></pre></td></tr><tr><td class="gutter"><pre><span class="line">7</span></pre></td><td class="code"><pre><span class="line"><span class="attr">fileReservedTime</span>=<span class="string">48</span></span></pre></td></tr><tr><td class="gutter"><pre><span class="line">8</span></pre></td><td class="code"><pre><span class="line"><span class="attr">brokerRole</span>=<span class="string">ASYNC_MASTER</span></span></pre></td></tr><tr><td class="gutter"><pre><span class="line">9</span></pre></td><td class="code"><pre><span class="line"><span class="attr">flushDiskType</span>=<span class="string">ASYNC_FLUSH</span></span></pre></td></tr><tr><td class="gutter"><pre><span class="line">10</span></pre></td><td class="code"><pre><span class="line"><span class="attr">autoCreateTopicEnable</span>=<span class="string">true</span></span></pre></td></tr><tr><td class="gutter"><pre><span class="line">11</span></pre></td><td class="code"><pre><span class="line"><span class="attr">listenPort</span>=<span class="string">10911</span></span></pre></td></tr><tr><td class="gutter"><pre><span class="line">12</span></pre></td><td class="code"><pre><span class="line"><span class="attr">storePathRootDir</span>=<span class="string">$ROCKETMQ_HOME/srote/a</span></span></pre></td></tr><tr><td class="gutter"><pre><span class="line">13</span></pre></td><td class="code"><pre><span class="line"><span class="comment"># nameServer地址，分号分割</span></span></pre></td></tr><tr><td class="gutter"><pre><span class="line">14</span></pre></td><td class="code"><pre><span class="line"><span class="attr">namesrvAddr</span>=<span class="string">192.168.1.240:9876;192.168.1.241:9876</span></span></pre></td></tr></table></figure>
+
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span></pre></td><td class="code"><pre><span class="line">[root@A 2m-2s-async]<span class="comment"># vim broker-b-s.properties</span></span></pre></td></tr></table></figure>
+
+<figure class="highlight properties"><table><tr><td class="gutter"><pre><span class="line">1</span></pre></td><td class="code"><pre><span class="line"><span class="comment"># 集群名称</span></span></pre></td></tr><tr><td class="gutter"><pre><span class="line">2</span></pre></td><td class="code"><pre><span class="line"><span class="attr">brokerClusterName</span>=<span class="string">rocketmq_cluster</span></span></pre></td></tr><tr><td class="gutter"><pre><span class="line">3</span></pre></td><td class="code"><pre><span class="line"><span class="attr">brokerName</span>=<span class="string">broker-b</span></span></pre></td></tr><tr><td class="gutter"><pre><span class="line">4</span></pre></td><td class="code"><pre><span class="line"><span class="comment"># 从服务器大于0</span></span></pre></td></tr><tr><td class="gutter"><pre><span class="line">5</span></pre></td><td class="code"><pre><span class="line"><span class="attr">brokerId</span>=<span class="string">1</span></span></pre></td></tr><tr><td class="gutter"><pre><span class="line">6</span></pre></td><td class="code"><pre><span class="line"><span class="attr">deleteWhen</span>=<span class="string">04</span></span></pre></td></tr><tr><td class="gutter"><pre><span class="line">7</span></pre></td><td class="code"><pre><span class="line"><span class="attr">fileReservedTime</span>=<span class="string">48</span></span></pre></td></tr><tr><td class="gutter"><pre><span class="line">8</span></pre></td><td class="code"><pre><span class="line"><span class="attr">brokerRole</span>=<span class="string">ASYNC_MASTER</span></span></pre></td></tr><tr><td class="gutter"><pre><span class="line">9</span></pre></td><td class="code"><pre><span class="line"><span class="attr">flushDiskType</span>=<span class="string">ASYNC_FLUSH</span></span></pre></td></tr><tr><td class="gutter"><pre><span class="line">10</span></pre></td><td class="code"><pre><span class="line"><span class="attr">autoCreateTopicEnable</span>=<span class="string">true</span></span></pre></td></tr><tr><td class="gutter"><pre><span class="line">11</span></pre></td><td class="code"><pre><span class="line"><span class="attr">listenPort</span>=<span class="string">10950</span></span></pre></td></tr><tr><td class="gutter"><pre><span class="line">12</span></pre></td><td class="code"><pre><span class="line"><span class="attr">storePathRootDir</span>=<span class="string">$ROCKETMQ_HOME/srote/b</span></span></pre></td></tr><tr><td class="gutter"><pre><span class="line">13</span></pre></td><td class="code"><pre><span class="line"><span class="comment"># nameServer地址，分号分割</span></span></pre></td></tr><tr><td class="gutter"><pre><span class="line">14</span></pre></td><td class="code"><pre><span class="line"><span class="attr">namesrvAddr</span>=<span class="string">192.168.1.240:9876;192.168.1.241:9876</span></span></pre></td></tr></table></figure>
+
+
+
+<p>2.在B机器上配置MasterB/SlaveA</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span></pre></td><td class="code"><pre><span class="line">[root@B 2m-2s-async]<span class="comment"># vim broker-b.properties</span></span></pre></td></tr></table></figure>
+
+<figure class="highlight properties"><table><tr><td class="gutter"><pre><span class="line">1</span></pre></td><td class="code"><pre><span class="line"><span class="comment"># 集群名称</span></span></pre></td></tr><tr><td class="gutter"><pre><span class="line">2</span></pre></td><td class="code"><pre><span class="line"><span class="attr">brokerClusterName</span>=<span class="string">rocketmq_cluster</span></span></pre></td></tr><tr><td class="gutter"><pre><span class="line">3</span></pre></td><td class="code"><pre><span class="line"><span class="attr">brokerName</span>=<span class="string">broker-b</span></span></pre></td></tr><tr><td class="gutter"><pre><span class="line">4</span></pre></td><td class="code"><pre><span class="line"><span class="comment"># 主服务器必须为0</span></span></pre></td></tr><tr><td class="gutter"><pre><span class="line">5</span></pre></td><td class="code"><pre><span class="line"><span class="attr">brokerId</span>=<span class="string">0</span></span></pre></td></tr><tr><td class="gutter"><pre><span class="line">6</span></pre></td><td class="code"><pre><span class="line"><span class="attr">deleteWhen</span>=<span class="string">04</span></span></pre></td></tr><tr><td class="gutter"><pre><span class="line">7</span></pre></td><td class="code"><pre><span class="line"><span class="attr">fileReservedTime</span>=<span class="string">48</span></span></pre></td></tr><tr><td class="gutter"><pre><span class="line">8</span></pre></td><td class="code"><pre><span class="line"><span class="attr">brokerRole</span>=<span class="string">ASYNC_MASTER</span></span></pre></td></tr><tr><td class="gutter"><pre><span class="line">9</span></pre></td><td class="code"><pre><span class="line"><span class="attr">flushDiskType</span>=<span class="string">ASYNC_FLUSH</span></span></pre></td></tr><tr><td class="gutter"><pre><span class="line">10</span></pre></td><td class="code"><pre><span class="line"><span class="attr">autoCreateTopicEnable</span>=<span class="string">true</span></span></pre></td></tr><tr><td class="gutter"><pre><span class="line">11</span></pre></td><td class="code"><pre><span class="line"><span class="attr">listenPort</span>=<span class="string">10950</span></span></pre></td></tr><tr><td class="gutter"><pre><span class="line">12</span></pre></td><td class="code"><pre><span class="line"><span class="attr">storePathRootDir</span>=<span class="string">$ROCKETMQ_HOME/srote/b</span></span></pre></td></tr><tr><td class="gutter"><pre><span class="line">13</span></pre></td><td class="code"><pre><span class="line"><span class="comment"># nameServer地址，分号分割</span></span></pre></td></tr><tr><td class="gutter"><pre><span class="line">14</span></pre></td><td class="code"><pre><span class="line"><span class="attr">namesrvAddr</span>=<span class="string">192.168.1.240:9876;192.168.1.241:9876</span></span></pre></td></tr></table></figure>
+
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span></pre></td><td class="code"><pre><span class="line">[root@B 2m-2s-async]<span class="comment"># vim broker-a-s.properties</span></span></pre></td></tr></table></figure>
+
+<figure class="highlight properties"><table><tr><td class="gutter"><pre><span class="line">1</span></pre></td><td class="code"><pre><span class="line"><span class="comment"># 集群名称</span></span></pre></td></tr><tr><td class="gutter"><pre><span class="line">2</span></pre></td><td class="code"><pre><span class="line"><span class="attr">brokerClusterName</span>=<span class="string">rocketmq_cluster</span></span></pre></td></tr><tr><td class="gutter"><pre><span class="line">3</span></pre></td><td class="code"><pre><span class="line"><span class="attr">brokerName</span>=<span class="string">broker-a</span></span></pre></td></tr><tr><td class="gutter"><pre><span class="line">4</span></pre></td><td class="code"><pre><span class="line"><span class="comment"># 从服务器大于0</span></span></pre></td></tr><tr><td class="gutter"><pre><span class="line">5</span></pre></td><td class="code"><pre><span class="line"><span class="attr">brokerId</span>=<span class="string">1</span></span></pre></td></tr><tr><td class="gutter"><pre><span class="line">6</span></pre></td><td class="code"><pre><span class="line"><span class="attr">deleteWhen</span>=<span class="string">04</span></span></pre></td></tr><tr><td class="gutter"><pre><span class="line">7</span></pre></td><td class="code"><pre><span class="line"><span class="attr">fileReservedTime</span>=<span class="string">48</span></span></pre></td></tr><tr><td class="gutter"><pre><span class="line">8</span></pre></td><td class="code"><pre><span class="line"><span class="attr">brokerRole</span>=<span class="string">ASYNC_MASTER</span></span></pre></td></tr><tr><td class="gutter"><pre><span class="line">9</span></pre></td><td class="code"><pre><span class="line"><span class="attr">flushDiskType</span>=<span class="string">ASYNC_FLUSH</span></span></pre></td></tr><tr><td class="gutter"><pre><span class="line">10</span></pre></td><td class="code"><pre><span class="line"><span class="attr">autoCreateTopicEnable</span>=<span class="string">true</span></span></pre></td></tr><tr><td class="gutter"><pre><span class="line">11</span></pre></td><td class="code"><pre><span class="line"><span class="attr">listenPort</span>=<span class="string">10911</span></span></pre></td></tr><tr><td class="gutter"><pre><span class="line">12</span></pre></td><td class="code"><pre><span class="line"><span class="attr">storePathRootDir</span>=<span class="string">$ROCKETMQ_HOME/srote/a</span></span></pre></td></tr><tr><td class="gutter"><pre><span class="line">13</span></pre></td><td class="code"><pre><span class="line"><span class="comment"># nameServer地址，分号分割</span></span></pre></td></tr><tr><td class="gutter"><pre><span class="line">14</span></pre></td><td class="code"><pre><span class="line"><span class="attr">namesrvAddr</span>=<span class="string">192.168.1.240:9876;192.168.1.241:9876</span></span></pre></td></tr></table></figure>
+
+
+
+<p>3.启动NameServer集群</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span></pre></td><td class="code"><pre><span class="line"><span class="comment">### 在A机器启动 NameServer</span></span></pre></td></tr><tr><td class="gutter"><pre><span class="line">2</span></pre></td><td class="code"><pre><span class="line">[root@A 4.6.0]<span class="comment"># nohup sh bin/mqnamesrv &amp;</span></span></pre></td></tr><tr><td class="gutter"><pre><span class="line">3</span></pre></td><td class="code"><pre><span class="line"><span class="comment">### 验证 NameServer 是否启动成功</span></span></pre></td></tr><tr><td class="gutter"><pre><span class="line">4</span></pre></td><td class="code"><pre><span class="line">[root@A 4.6.0]<span class="comment"># tail -f nohup.out</span></span></pre></td></tr><tr><td class="gutter"><pre><span class="line">5</span></pre></td><td class="code"><pre><span class="line">The Name Server boot success...</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">6</span></pre></td><td class="code"><pre><span class="line"></span></pre></td></tr><tr><td class="gutter"><pre><span class="line">7</span></pre></td><td class="code"><pre><span class="line"><span class="comment">### 在B机器启动 NameServer</span></span></pre></td></tr><tr><td class="gutter"><pre><span class="line">8</span></pre></td><td class="code"><pre><span class="line">[root@B 4.6.0]<span class="comment"># nohup sh bin/mqnamesrv &amp;</span></span></pre></td></tr><tr><td class="gutter"><pre><span class="line">9</span></pre></td><td class="code"><pre><span class="line"><span class="comment">### 验证 NameServer 是否启动成功</span></span></pre></td></tr><tr><td class="gutter"><pre><span class="line">10</span></pre></td><td class="code"><pre><span class="line">[root@B 4.6.0]<span class="comment"># tail -f nohup.out</span></span></pre></td></tr><tr><td class="gutter"><pre><span class="line">11</span></pre></td><td class="code"><pre><span class="line">The Name Server boot success...</span></pre></td></tr></table></figure>
+
+<p>P.S. 如果出现<code>Cannot allocate memory</code> 异常信息，则需要修改一下runserver.sh和runbroker.sh的合适的jvm参数就可以了。</p>
+<p>4.启动Broker集群</p>
+<ul>
+<li>在A机器启动Broker</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span></pre></td><td class="code"><pre><span class="line"><span class="comment">### 在A机器启动Master、Slave</span></span></pre></td></tr><tr><td class="gutter"><pre><span class="line">2</span></pre></td><td class="code"><pre><span class="line">[root@A 4.6.0]<span class="comment"># nohup sh bin/mqbroker -c $ROCKETMQ_HOME/conf/2m-2s-async/broker-a.properties &amp;</span></span></pre></td></tr><tr><td class="gutter"><pre><span class="line">3</span></pre></td><td class="code"><pre><span class="line">[root@A 4.6.0]<span class="comment"># nohup sh bin/mqbroker -c $ROCKETMQ_HOME/conf/2m-2s-async/broker-b-s.properties &amp;</span></span></pre></td></tr></table></figure>
+
+
+
+<ul>
+<li>在B机器启动Broker</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span></pre></td><td class="code"><pre><span class="line"><span class="comment">### 在B机器启动Master、Slave</span></span></pre></td></tr><tr><td class="gutter"><pre><span class="line">2</span></pre></td><td class="code"><pre><span class="line">[root@B 4.6.0]<span class="comment"># nohup sh bin/mqbroker -c $ROCKETMQ_HOME/conf/2m-2s-async/broker-b.properties &amp;</span></span></pre></td></tr><tr><td class="gutter"><pre><span class="line">3</span></pre></td><td class="code"><pre><span class="line">[root@B 4.6.0]<span class="comment"># nohup sh bin/mqbroker -c $ROCKETMQ_HOME/conf/2m-2s-async/broker-a-s.properties &amp;</span></span></pre></td></tr></table></figure>
+
+
+
+<ul>
+<li><p><code>$ROCKETMQ_HOME</code>指的RocketMQ安装目录，需要用户自己设置此环境变量。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span></pre></td><td class="code"><pre><span class="line">vim /etc/profile</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">2</span></pre></td><td class="code"><pre><span class="line"><span class="comment">### 在尾部加上</span></span></pre></td></tr><tr><td class="gutter"><pre><span class="line">3</span></pre></td><td class="code"><pre><span class="line"><span class="built_in">export</span> ROCKETMQ_HOME=/home/data/application/rocketmq/4.6.0</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">4</span></pre></td><td class="code"><pre><span class="line"><span class="comment">### 重启环境生效</span></span></pre></td></tr><tr><td class="gutter"><pre><span class="line">5</span></pre></td><td class="code"><pre><span class="line"><span class="built_in">source</span> /etc/profile</span></pre></td></tr></table></figure>
+
+
+
+</li>
+</ul>
+<p>我在A机器启动Broker的时候出现了异常信息：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span></pre></td><td class="code"><pre><span class="line">[main] ERROR RocketmqCommon - Failed to obtain the host name</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">2</span></pre></td><td class="code"><pre><span class="line">java.net.UnknownHostException: testing: testing: 域名解析暂时失败</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">3</span></pre></td><td class="code"><pre><span class="line">	at java.net.InetAddress.getLocalHost(InetAddress.java:<span class="number">1506</span>) ~[na:<span class="number">1.8</span><span class="number">.0_221</span>]</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">4</span></pre></td><td class="code"><pre><span class="line">	at org.apache.rocketmq.common.BrokerConfig.localHostName(BrokerConfig.java:<span class="number">189</span>) [rocketmq-common-<span class="number">4.6</span><span class="number">.0</span>.jar:<span class="number">4.6</span><span class="number">.0</span>]</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">5</span></pre></td><td class="code"><pre><span class="line">	at org.apache.rocketmq.common.BrokerConfig.&lt;init&gt;(BrokerConfig.java:<span class="number">38</span>) [rocketmq-common-<span class="number">4.6</span><span class="number">.0</span>.jar:<span class="number">4.6</span><span class="number">.0</span>]</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">6</span></pre></td><td class="code"><pre><span class="line">	at org.apache.rocketmq.broker.BrokerStartup.createBrokerController(BrokerStartup.java:<span class="number">110</span>) [rocketmq-broker-<span class="number">4.6</span><span class="number">.0</span>.jar:<span class="number">4.6</span><span class="number">.0</span>]</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">7</span></pre></td><td class="code"><pre><span class="line">	at org.apache.rocketmq.broker.BrokerStartup.main(BrokerStartup.java:<span class="number">58</span>) [rocketmq-broker-<span class="number">4.6</span><span class="number">.0</span>.jar:<span class="number">4.6</span><span class="number">.0</span>]</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">8</span></pre></td><td class="code"><pre><span class="line">Caused by: java.net.UnknownHostException: testing: 域名解析暂时失败</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">9</span></pre></td><td class="code"><pre><span class="line">	at java.net.Inet6AddressImpl.lookupAllHostAddr(Native Method) ~[na:<span class="number">1.8</span><span class="number">.0_221</span>]</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">10</span></pre></td><td class="code"><pre><span class="line">	at java.net.InetAddress$<span class="number">2</span>.lookupAllHostAddr(InetAddress.java:<span class="number">929</span>) ~[na:<span class="number">1.8</span><span class="number">.0_221</span>]</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">11</span></pre></td><td class="code"><pre><span class="line">	at java.net.InetAddress.getAddressesFromNameService(InetAddress.java:<span class="number">1324</span>) ~[na:<span class="number">1.8</span><span class="number">.0_221</span>]</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">12</span></pre></td><td class="code"><pre><span class="line">	at java.net.InetAddress.getLocalHost(InetAddress.java:<span class="number">1501</span>) ~[na:<span class="number">1.8</span><span class="number">.0_221</span>]</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">13</span></pre></td><td class="code"><pre><span class="line">	... <span class="number">4</span> common frames omitted</span></pre></td></tr></table></figure>
+
+<p>由错误信息得知，这是由于Broker启动的时候找不到主机名（我的主机名叫testing）对应的IP地址造成的。可以通过修改 /etc/hosts 文件，增加一个主机名解析就可以了。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span></pre></td><td class="code"><pre><span class="line">$ <span class="built_in">echo</span> <span class="string">'127.0.0.1 testing'</span> &gt;&gt; /etc/hosts</span></pre></td></tr></table></figure>
+
+
+
+<p>当看到所以broker启动成功即完成。</p>
+<p><strong><code>broker.properties</code>的详细配置信息：</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span></pre></td><td class="code"><pre><span class="line">#所属集群名字</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">2</span></pre></td><td class="code"><pre><span class="line">brokerClusterName&#x3D;rocketmq-cluster</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">3</span></pre></td><td class="code"><pre><span class="line">#broker名字，注意此处不同的配置文件填写的不一样</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">4</span></pre></td><td class="code"><pre><span class="line">brokerName&#x3D;broker-a</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">5</span></pre></td><td class="code"><pre><span class="line">#0表示Master，&gt;0表示Slave</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">6</span></pre></td><td class="code"><pre><span class="line">brokerId&#x3D;0</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">7</span></pre></td><td class="code"><pre><span class="line">#nameServer地址，分号分割</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">8</span></pre></td><td class="code"><pre><span class="line">namesrvAddr&#x3D;rocketmq-nameserver1:9876;rocketmq-nameserver2:9876</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">9</span></pre></td><td class="code"><pre><span class="line">#在发送消息时，自动创建服务器不存在的topic，默认创建的队列数</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">10</span></pre></td><td class="code"><pre><span class="line">defaultTopicQueueNums&#x3D;4</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">11</span></pre></td><td class="code"><pre><span class="line">#是否允许Broker自动创建Topic，建议线下开启，线上关闭</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">12</span></pre></td><td class="code"><pre><span class="line">autoCreateTopicEnable&#x3D;true</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">13</span></pre></td><td class="code"><pre><span class="line">#是否允许Broker自动创建订阅组，建议线下开启，线上关闭</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">14</span></pre></td><td class="code"><pre><span class="line">autoCreateSubscriptionGroup&#x3D;true</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">15</span></pre></td><td class="code"><pre><span class="line">#Broker对外服务的监听端口</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">16</span></pre></td><td class="code"><pre><span class="line">listenPort&#x3D;10911</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">17</span></pre></td><td class="code"><pre><span class="line">#删除文件时间点，默认凌晨4点</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">18</span></pre></td><td class="code"><pre><span class="line">deleteWhen&#x3D;04</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">19</span></pre></td><td class="code"><pre><span class="line">#文件保留时间，默认48小时</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">20</span></pre></td><td class="code"><pre><span class="line">fileReservedTime&#x3D;120</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">21</span></pre></td><td class="code"><pre><span class="line">#commitLog每个文件的大小默认1G</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">22</span></pre></td><td class="code"><pre><span class="line">mapedFileSizeCommitLog&#x3D;1073741824</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">23</span></pre></td><td class="code"><pre><span class="line">#ConsumeQueue每个文件默认存30W条，根据业务情况调整</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">24</span></pre></td><td class="code"><pre><span class="line">mapedFileSizeConsumeQueue&#x3D;300000</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">25</span></pre></td><td class="code"><pre><span class="line">#destroyMapedFileIntervalForcibly&#x3D;120000</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">26</span></pre></td><td class="code"><pre><span class="line">#redeleteHangedFileInterval&#x3D;120000</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">27</span></pre></td><td class="code"><pre><span class="line">#检测物理文件磁盘空间</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">28</span></pre></td><td class="code"><pre><span class="line">diskMaxUsedSpaceRatio&#x3D;88</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">29</span></pre></td><td class="code"><pre><span class="line">#存储路径</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">30</span></pre></td><td class="code"><pre><span class="line">storePathRootDir&#x3D;&#x2F;usr&#x2F;local&#x2F;rocketmq&#x2F;store</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">31</span></pre></td><td class="code"><pre><span class="line">#commitLog存储路径</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">32</span></pre></td><td class="code"><pre><span class="line">storePathCommitLog&#x3D;&#x2F;usr&#x2F;local&#x2F;rocketmq&#x2F;store&#x2F;commitlog</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">33</span></pre></td><td class="code"><pre><span class="line">#消费队列存储路径存储路径</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">34</span></pre></td><td class="code"><pre><span class="line">storePathConsumeQueue&#x3D;&#x2F;usr&#x2F;local&#x2F;rocketmq&#x2F;store&#x2F;consumequeue</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">35</span></pre></td><td class="code"><pre><span class="line">#消息索引存储路径</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">36</span></pre></td><td class="code"><pre><span class="line">storePathIndex&#x3D;&#x2F;usr&#x2F;local&#x2F;rocketmq&#x2F;store&#x2F;index</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">37</span></pre></td><td class="code"><pre><span class="line">#checkpoint文件存储路径</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">38</span></pre></td><td class="code"><pre><span class="line">storeCheckpoint&#x3D;&#x2F;usr&#x2F;local&#x2F;rocketmq&#x2F;store&#x2F;checkpoint</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">39</span></pre></td><td class="code"><pre><span class="line">#abort文件存储路径</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">40</span></pre></td><td class="code"><pre><span class="line">abortFile&#x3D;&#x2F;usr&#x2F;local&#x2F;rocketmq&#x2F;store&#x2F;abort</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">41</span></pre></td><td class="code"><pre><span class="line">#限制的消息大小</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">42</span></pre></td><td class="code"><pre><span class="line">maxMessageSize&#x3D;65536</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">43</span></pre></td><td class="code"><pre><span class="line">#flushCommitLogLeastPages&#x3D;4</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">44</span></pre></td><td class="code"><pre><span class="line">#flushConsumeQueueLeastPages&#x3D;2</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">45</span></pre></td><td class="code"><pre><span class="line">#flushCommitLogThoroughInterval&#x3D;10000</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">46</span></pre></td><td class="code"><pre><span class="line">#flushConsumeQueueThoroughInterval&#x3D;60000</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">47</span></pre></td><td class="code"><pre><span class="line">#Broker的角色</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">48</span></pre></td><td class="code"><pre><span class="line">#-ASYNC_MASTER异步复制Master</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">49</span></pre></td><td class="code"><pre><span class="line">#-SYNC_MASTER同步双写Master</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">50</span></pre></td><td class="code"><pre><span class="line">#-SLAVE</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">51</span></pre></td><td class="code"><pre><span class="line">brokerRole&#x3D;ASYNC_MASTER</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">52</span></pre></td><td class="code"><pre><span class="line">#刷盘方式</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">53</span></pre></td><td class="code"><pre><span class="line">#-ASYNC_FLUSH异步刷盘</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">54</span></pre></td><td class="code"><pre><span class="line">#-SYNC_FLUSH同步刷盘</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">55</span></pre></td><td class="code"><pre><span class="line">flushDiskType&#x3D;ASYNC_FLUSH</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">56</span></pre></td><td class="code"><pre><span class="line">#checkTransactionMessageEnable&#x3D;false</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">57</span></pre></td><td class="code"><pre><span class="line">#发消息线程池数量</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">58</span></pre></td><td class="code"><pre><span class="line">#sendMessageThreadPoolNums&#x3D;128</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">59</span></pre></td><td class="code"><pre><span class="line">#拉消息线程池数量</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">60</span></pre></td><td class="code"><pre><span class="line">#pullMessageThreadPoolNums&#x3D;128</span></pre></td></tr></table></figure>
+
+
+
+<p>查看NameServer、Broker服务是否启动</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span></pre></td><td class="code"><pre><span class="line">$ jps</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">2</span></pre></td><td class="code"><pre><span class="line">32515 BrokerStartup</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">3</span></pre></td><td class="code"><pre><span class="line">32618 BrokerStartup</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">4</span></pre></td><td class="code"><pre><span class="line">32764 Jps</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">5</span></pre></td><td class="code"><pre><span class="line">31613 NamesrvStartup</span></pre></td></tr></table></figure>
+
+
+
+<p>关闭所有服务</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span></pre></td><td class="code"><pre><span class="line">$ sh bin/mqshutdown broker</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">2</span></pre></td><td class="code"><pre><span class="line">$ sh bin/mqshutdown namesrv</span></pre></td></tr></table></figure>
+
+
+
+<h6 id="安装管理面板-rocketmq-console-ng"><a href="#安装管理面板-rocketmq-console-ng" class="headerlink" title="安装管理面板(rocketmq-console-ng)"></a>安装管理面板(rocketmq-console-ng)</h6><p>1.下载源代码编译</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span></pre></td><td class="code"><pre><span class="line">git <span class="built_in">clone</span> https://github.com/apache/rocketmq-externals/tree/master/rocketmq-console</span></pre></td></tr></table></figure>
+
+<p>或者</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span></pre></td><td class="code"><pre><span class="line">wget https://codeload.github.com/apache/rocketmq-externals/zip/master -O rocketmq-externals.zip</span></pre></td></tr></table></figure>
+
+<p>然后进入 rocketmq-console 模块</p>
+<p>2.修改部分参数并编译</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span></pre></td><td class="code"><pre><span class="line">$ vim src/main/resources/application.properties</span></pre></td></tr></table></figure>
+
+<figure class="highlight properties"><table><tr><td class="gutter"><pre><span class="line">1</span></pre></td><td class="code"><pre><span class="line"><span class="meta">rocketmq.config.namesrvAddr</span>=<span class="string">192.168.1.240:9876;192.168.1.241:9876</span></span></pre></td></tr></table></figure>
+
+
+
+<p>3.使用maven编译打包并启动</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span></pre></td><td class="code"><pre><span class="line">$ mvn clean package -Dmaven.test.skip&#x3D;true</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">2</span></pre></td><td class="code"><pre><span class="line">$ java -jar target&#x2F;rocketmq-console-ng-1.0.1.jar</span></pre></td></tr></table></figure>
+
+
+
+<h6 id="使用mqadmin查看集群情况"><a href="#使用mqadmin查看集群情况" class="headerlink" title="使用mqadmin查看集群情况"></a>使用mqadmin查看集群情况</h6><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span></pre></td><td class="code"><pre><span class="line">$ export NAMESRV_ADDR&#x3D;&quot;192.168.1.240:9876;192.168.5.241:9876&quot;</span></pre></td></tr><tr><td class="gutter"><pre><span class="line">2</span></pre></td><td class="code"><pre><span class="line">$ sh mqadmin clusterlist -n 192.168.1.240:9876</span></pre></td></tr></table></figure>
+
+
+
+<h6 id="遇到的问题及处理办法"><a href="#遇到的问题及处理办法" class="headerlink" title="遇到的问题及处理办法"></a>遇到的问题及处理办法</h6><p><a href="https://github.com/apache/rocketmq/issues/504" target="_blank" rel="noopener">https://github.com/apache/rocketmq/issues/504</a></p>
+<p><a href="https://github.com/apache/rocketmq/issues/568" target="_blank" rel="noopener">https://github.com/apache/rocketmq/issues/568</a></p>
+<p><a href="https://github.com/Shellbye/Shellbye.github.io/issues/69" target="_blank" rel="noopener">https://github.com/Shellbye/Shellbye.github.io/issues/69</a></p>
+<h6 id="相关资料"><a href="#相关资料" class="headerlink" title="相关资料"></a>相关资料</h6><p><a href="https://rocketmq.apache.org" target="_blank" rel="noopener">https://rocketmq.apache.org</a></p>
+<p><a href="https://github.com/apache/rocketmq/tree/release-4.6.0/docs/cn" target="_blank" rel="noopener">https://github.com/apache/rocketmq/tree/release-4.6.0/docs/cn</a></p>
+<p><a href="https://github.com/apache/rocketmq-spring" target="_blank" rel="noopener">https://github.com/apache/rocketmq-spring</a></p>
+
+        </div>
+
+        
+            <section class="post-copyright">
+                
+                    <p class="copyright-item">
+                        <span>Author:</span>
+                        <span>champion97</span>
+                    </p>
+                
+                
+                    <p class="copyright-item">
+                        <span>Permalink:</span>
+                        <span><a href="https://champion97.netlify.com/2019/12/09/RocketMQ%E9%9B%86%E7%BE%A4%E9%83%A8%E7%BD%B2%E7%AC%94%E8%AE%B0/">https://champion97.netlify.com/2019/12/09/RocketMQ%E9%9B%86%E7%BE%A4%E9%83%A8%E7%BD%B2%E7%AC%94%E8%AE%B0/</a></span>
+                    </p>
+                
+                
+                    <p class="copyright-item">
+                        <span>License:</span>
+                        <span>Copyright (c) 2019 <a href="http://creativecommons.org/licenses/by-nc/4.0/" target="_blank" rel="noopener">CC-BY-NC-4.0</a> LICENSE</span>
+                    </p>
+                
+                
+                     <p class="copyright-item">
+                         <span>Slogan:</span>
+                         <span>Do you believe in <strong>DESTINY<strong>?</span>
+                     </p>
+                
+
+            </section>
+        
+        <section class="post-tags">
+            <div>
+                <span>Tag(s):</span>
+                <span class="tag">
+                    
+                </span>
+            </div>
+            <div>
+                <a href="javascript:window.history.back();" target="_blank" rel="noopener">back</a>
+                <span>· </span>
+                <a href="/">home</a>
+            </div>
+        </section>
+        <section class="post-nav">
+            
+            
+            <a class="next" rel="next" href="/2019/12/06/hello-world/">Hello World</a>
+            
+        </section>
+
+
+    </article>
+</div>
+
+        </div>
+        <footer id="footer" class="footer">
+    <div class="copyright">
+        <span>© champion97 | Powered by <a href="https://hexo.io" target="_blank">Hexo</a> & <a href="https://github.com/Siricee/hexo-theme-Chic" target="_blank">Chic</a> & <a href="https://www.netlify.com" target="_blank">Netlify</a></span>
+    </div>
+</footer>
+
+    </div>
+</body>
+</html>
