@@ -316,7 +316,7 @@
       
         
           
-            <h1 id="RocketMQ集群-2m-2s-sync-部署笔记"><a href="#RocketMQ集群-2m-2s-sync-部署笔记" class="headerlink" title="RocketMQ集群(2m-2s-sync)部署笔记"></a>RocketMQ集群(2m-2s-sync)部署笔记</h1><h2 id="背景介绍"><a href="#背景介绍" class="headerlink" title="背景介绍"></a>背景介绍</h2><p>随着时间推移和数据的累积，老项目中的ActiveMQ的缺点越来越明显了。主要表现在：队列增多、消息堆积、吞吐量下降甚至出现了消息丢失等一系列问题；结合这几天对消息中间件的调研最终决定使用RocketMQ（集群部署）替代ActiveMQ（迁移工作笔记后续补充）。</p>
+            <h1 id="RocketMQ集群-2m-2s-async-部署笔记"><a href="#RocketMQ集群-2m-2s-async-部署笔记" class="headerlink" title="RocketMQ集群(2m-2s-async)部署笔记"></a>RocketMQ集群(2m-2s-async)部署笔记</h1><h2 id="背景介绍"><a href="#背景介绍" class="headerlink" title="背景介绍"></a>背景介绍</h2><p>随着时间推移和数据的累积，老项目中的ActiveMQ的缺点越来越明显了。主要表现在：队列增多、消息堆积、吞吐量下降甚至出现了消息丢失等一系列问题；结合这几天对消息中间件的调研最终决定使用RocketMQ（集群部署）替代ActiveMQ（迁移工作笔记后续补充）。</p>
 <h2 id="使用RocketMQ的原因"><a href="#使用RocketMQ的原因" class="headerlink" title="使用RocketMQ的原因"></a>使用RocketMQ的原因</h2><ul>
 <li><p>灵活的分布式横向扩展部署架构，低延迟、高可靠</p>
 </li>
@@ -355,7 +355,7 @@
 <li>优点：数据与服务都无单点故障，Master宕机情况下，消息无延迟，服务可用性与数据可用性都非常高；</li>
 <li>缺点：性能比异步复制模式略低（大约低10%左右），发送单个消息的RT会略高，且目前版本在主节点宕机后，备机不能自动切换为主机。</li>
 </ul>
-<h2 id="2m-2s-sync模式搭建记录"><a href="#2m-2s-sync模式搭建记录" class="headerlink" title="2m-2s-sync模式搭建记录"></a>2m-2s-sync模式搭建记录</h2><p>我们采用的是2m-2s-sync()模式进行集群（也就是2个Master和2个Slave-异步复制的模式）。双主双从一般有两种模式：异步复制和同步双写。同步双写就是，当生产端生产消息后，主节点和从节点都收到消息并把消息都同时写入到本地后，才会回复消息。而异步复制是指，当主节点将数据保存到本地后，直接返回成功的消息，不关系从节点是否写入成功。因此通过比较，我们可以看出，异步复制效率比较高，而同步双写更具有高可用性，数据也变得更加可靠。</p>
+<h2 id="2m-2s-sync模式搭建记录"><a href="#2m-2s-sync模式搭建记录" class="headerlink" title="2m-2s-sync模式搭建记录"></a>2m-2s-sync模式搭建记录</h2><p>我们采用的是2m-2s-async()模式进行集群（也就是2个Master和2个Slave-异步复制的模式）。双主双从一般有两种模式：异步复制和同步双写。同步双写就是，当生产端生产消息后，主节点和从节点都收到消息并把消息都同时写入到本地后，才会回复消息。而异步复制是指，当主节点将数据保存到本地后，直接返回成功的消息，不关系从节点是否写入成功。因此通过比较，我们可以看出，异步复制效率比较高，而同步双写更具有高可用性，数据也变得更加可靠。</p>
 <h3 id="环境准备"><a href="#环境准备" class="headerlink" title="环境准备"></a>环境准备</h3><ol>
 <li><p>Apache RocketMQ4.6.0 安装包</p>
 <p>下载地址：<a href="https://rocketmq.apache.org/dowloading/releases/，目前有官方有7个大版本，我下载的最新版本" target="_blank" rel="noopener">https://rocketmq.apache.org/dowloading/releases/，目前有官方有7个大版本，我下载的最新版本</a> <strong>4.6.0</strong>。</p>
